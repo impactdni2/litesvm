@@ -58,6 +58,10 @@ pub(crate) struct AccountsDb {
 }
 
 impl AccountsDb {
+    pub(crate) fn new() -> Self {
+        Self { inner: HashMap::with_capacity(64), ..Default::default() }
+    }
+
     pub(crate) fn get_account(&self, pubkey: &Pubkey) -> Option<AccountSharedData> {
         self.inner.get(pubkey).map(|acc| acc.to_owned())
     }

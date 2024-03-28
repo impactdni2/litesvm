@@ -75,7 +75,7 @@ pub struct LiteSVM {
 impl Default for LiteSVM {
     fn default() -> Self {
         Self {
-            accounts: Default::default(),
+            accounts: AccountsDb::new(),
             airdrop_kp: Keypair::new(),
             feature_set: Default::default(),
             latest_blockhash: create_blockhash(b"genesis"),
