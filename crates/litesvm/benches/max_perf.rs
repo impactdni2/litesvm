@@ -1,7 +1,7 @@
 use {
     criterion::{criterion_group, criterion_main, Criterion},
     litesvm::LiteSVM,
-    solana_account::Account,
+    solana_account::{Account, ReadableAccount},
     solana_instruction::{account_meta::AccountMeta, Instruction},
     solana_keypair::Keypair,
     solana_message::Message,
@@ -64,7 +64,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                 svm.send_transaction(tx.clone()).unwrap();
             }
             assert_eq!(
-                svm.get_account(&counter_address).unwrap().data[0],
+                svm.get_account(&counter_address).unwrap().data()[0],
                 NUM_GREETINGS
             );
         })

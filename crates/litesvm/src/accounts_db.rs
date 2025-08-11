@@ -88,6 +88,11 @@ impl AccountsDb {
         Ok(())
     }
 
+    pub(crate) fn add_shared_account(&self, pubkey: Pubkey, account: AccountSharedData) -> Result<(), LiteSVMError> {
+        self.shared.insert(pubkey, account);
+        Ok(())
+    }
+
     fn maybe_handle_sysvar_account(
         &mut self,
         pubkey: Pubkey,

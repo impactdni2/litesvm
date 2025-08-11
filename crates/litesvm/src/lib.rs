@@ -593,6 +593,10 @@ impl LiteSVM {
         self.accounts.add_account(pubkey, data.into())
     }
 
+    pub fn set_shared_account(&self, pubkey: Pubkey, data: Account) -> Result<(), LiteSVMError> {
+        self.accounts.add_shared_account(pubkey, data.into())
+    }
+
     /// Gets the balance of the provided account pubkey.
     pub fn get_balance(&self, pubkey: &Pubkey) -> Option<u64> {
         self.accounts.get_account(pubkey).map(|x| x.lamports())
