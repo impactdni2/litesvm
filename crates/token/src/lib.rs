@@ -38,6 +38,7 @@ use {
     solana_pubkey::Pubkey,
     solana_transaction_error::TransactionError,
 };
+use solana_account::ReadableAccount;
 
 pub const TOKEN_ID: Pubkey = spl_token::ID;
 
@@ -51,7 +52,7 @@ pub fn get_spl_account<T: Pack + IsInitialized>(
                 err: TransactionError::AccountNotFound,
                 meta: Default::default(),
             })?
-            .data[..T::LEN],
+            .data()[..T::LEN],
     )?;
 
     Ok(account)

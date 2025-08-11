@@ -18,6 +18,8 @@ agave-precompiles.workspace = true
 agave-reserved-account-keys.workspace = true
 ansi_term.workspace = true
 bincode.workspace = true
+dashmap = { version = "6.1.0", features = ["inline"] }
+hashbrown = "0.15.5"
 indexmap.workspace = true
 itertools.workspace = true
 log.workspace = true

@@ -181,7 +181,7 @@ impl LiteSvm {
     #[napi]
     /// Returns all information associated with the account of the provided pubkey.
     pub fn get_account(&self, pubkey: Uint8Array) -> Option<Account> {
-        self.0.get_account(&convert_pubkey(pubkey)).map(Account)
+        self.0.get_account(&convert_pubkey(pubkey)).map(|x| Account(x.into()))
     }
 
     #[napi]

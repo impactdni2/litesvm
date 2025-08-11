@@ -14,6 +14,7 @@ token-2022 = ["spl-token-2022"]
 [dependencies]
 litesvm.workspace = true
 smallvec = "1.13"
+solana-account.workspace = true
 solana-keypair.workspace = true
 solana-program-pack.workspace = true
 solana-pubkey.workspace = true

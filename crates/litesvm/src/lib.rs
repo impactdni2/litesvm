@@ -259,6 +259,7 @@ use qualifier_attr::qualifiers;
 use solana_sysvar::recent_blockhashes::IterItem;
 #[allow(deprecated)]
 use solana_sysvar::{fees::Fees, recent_blockhashes::RecentBlockhashes};
+
 use {
     crate::{
         accounts_db::AccountsDb,
@@ -583,8 +584,8 @@ impl LiteSVM {
     }
 
     /// Returns all information associated with the account of the provided pubkey.
-    pub fn get_account(&self, pubkey: &Pubkey) -> Option<Account> {
-        self.accounts.get_account(pubkey).map(Into::into)
+    pub fn get_account(&self, pubkey: &Pubkey) -> Option<AccountSharedData> {
+        self.accounts.get_account(pubkey)
     }
 
     /// Sets all information associated with the account of the provided pubkey.
@@ -916,7 +917,7 @@ impl LiteSVM {
                         );
                         return Err(TransactionError::InvalidProgramForExecution);
                     }
-                    if !owner_account.executable {
+                    if !owner_account.executable() {
                         error!("Owner account {owner_id} is not executable");
                         return Err(TransactionError::InvalidProgramForExecution);
                     }
