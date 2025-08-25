@@ -69,6 +69,10 @@ pub(crate) struct AccountsDb {
 }
 
 impl AccountsDb {
+    pub(crate) fn iter_accounts(&self) -> impl Iterator<Item = (&Pubkey, &AccountSharedData)> {
+        self.inner.iter()
+    }
+
     pub(crate) fn has_account(&self, pubkey: &Pubkey) -> bool {
         self.inner.contains_key(pubkey)
     }

@@ -592,6 +592,11 @@ impl LiteSVM {
         self.accounts.has_account(pubkey)
     }
 
+    /// Returns an iterator over all accounts in the AccountsDb.
+    pub fn iter_accounts(&self) -> impl Iterator<Item = (&Pubkey, &AccountSharedData)> {
+        self.accounts.iter_accounts()
+    }
+
     /// Sets all information associated with the account of the provided pubkey.
     pub fn set_account(&mut self, pubkey: Pubkey, data: Account) -> Result<(), LiteSVMError> {
         self.accounts.add_account(pubkey, data.into())
