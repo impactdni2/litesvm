@@ -1,9 +1,9 @@
 // copied from agave commit 63b13a1f6ad263fb62e1f80156eaf09838f1aff0
 // with some execute_timings usage removed
 use {
-    solana_program_runtime::invoke_context::InvokeContext, solana_svm_timings::ExecuteTimings,
-    solana_svm_transaction::svm_message::SVMMessage, solana_transaction_context::IndexOfAccount,
-    solana_transaction_error::TransactionError,
+    minstant::Instant, solana_program_runtime::invoke_context::InvokeContext,
+    solana_svm_timings::ExecuteTimings, solana_svm_transaction::svm_message::SVMMessage,
+    solana_transaction_context::IndexOfAccount, solana_transaction_error::TransactionError,
 };
 
 /// Process a message.
@@ -19,6 +19,7 @@ pub(crate) fn process_message(
     accumulated_consumed_units: &mut u64,
 ) -> Result<(), TransactionError> {
     debug_assert_eq!(program_indices.len(), message.num_instructions());
+    let mut start = Instant::now();
     for (top_level_instruction_index, ((program_id, instruction), program_account_index)) in message
         .program_instructions_iter()
         .zip(program_indices.iter())
@@ -29,7 +30,12 @@ pub(crate) fn process_message(
             .map_err(|err| {
                 TransactionError::InstructionError(top_level_instruction_index as u8, err)
             })?;
-
+        log::warn!(
+            "process_message prepare_next_top_level_instruction[{}] took {:?}",
+            top_level_instruction_index,
+            start.elapsed()
+        );
+        start = Instant::now();
         let mut compute_units_consumed = 0;
         let result = if invoke_context.is_precompile(program_id) {
             invoke_context.process_precompile(
@@ -40,7 +46,13 @@ pub(crate) fn process_message(
         } else {
             invoke_context.process_instruction(&mut compute_units_consumed, execute_timings)
         };
-
+        log::warn!(
+            "process_message process_instruction[{}] took {:?}, is precompile: {}",
+            top_level_instruction_index,
+            start.elapsed(),
+            invoke_context.is_precompile(program_id)
+        );
+        start = Instant::now();
         *accumulated_consumed_units =
             accumulated_consumed_units.saturating_add(compute_units_consumed);
 

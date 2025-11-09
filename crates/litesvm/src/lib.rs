@@ -1189,15 +1189,9 @@ impl LiteSVM {
         sanitized_tx: &SanitizedTransaction,
         log_collector: Rc<RefCell<LogCollector>>,
     ) -> Result<CheckAndProcessTransactionSuccess, ExecutionResult> {
-        let start = Instant::now();
         self.maybe_blockhash_check(sanitized_tx)?;
-        log::warn!("maybe_blockhash_check took {:?}", start.elapsed());
-        let start = Instant::now();
         let compute_budget_limits = get_compute_budget_limits(sanitized_tx, &self.feature_set)?;
-        log::warn!("get_compute_budget_limits took {:?}", start.elapsed());
-        let start = Instant::now();
         self.maybe_history_check(sanitized_tx)?;
-        log::warn!("maybe_history_check took {:?}", start.elapsed());
         let start = Instant::now();
         let (result, compute_units_consumed, context, fee, payer_key) =
             self.process_transaction(sanitized_tx, compute_budget_limits, log_collector);
