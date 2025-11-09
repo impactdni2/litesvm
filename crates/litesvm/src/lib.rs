@@ -843,14 +843,22 @@ impl LiteSVM {
         u64,
         Option<Pubkey>,
     ) {
+        let start = Instant::now();
         let compute_budget = self.compute_budget.unwrap_or_else(|| ComputeBudget {
             compute_unit_limit: u64::from(compute_budget_limits.compute_unit_limit),
             heap_size: compute_budget_limits.updated_heap_bytes,
             ..ComputeBudget::new_with_defaults(false)
         });
         let blockhash = tx.message().recent_blockhash();
+        log::warn!("process_transaction blockhash took {:?}", start.elapsed());
+        let start = Instant::now();
         //reload program cache
         let mut program_cache_for_tx_batch = self.accounts.programs_cache.clone();
+        log::warn!(
+            "process_transaction program_cache_for_tx_batch took {:?}",
+            start.elapsed()
+        );
+        let start = Instant::now();
         let mut accumulated_consume_units = 0;
         let message = tx.message();
         let account_keys = message.account_keys();
@@ -867,6 +875,8 @@ impl LiteSVM {
             0,
             FeeFeatures::from(&self.feature_set),
         );
+        log::warn!("process_transaction fee took {:?}", start.elapsed());
+        let start = Instant::now();
         let mut validated_fee_payer = false;
         let mut payer_key = None;
         let maybe_accounts = account_keys
@@ -914,6 +924,11 @@ impl LiteSVM {
                 Ok((*key, account))
             })
             .collect::<solana_transaction_error::TransactionResult<Vec<_>>>();
+        log::warn!(
+            "process_transaction maybe_accounts took {:?}",
+            start.elapsed()
+        );
+        let start = Instant::now();
         let mut accounts = match maybe_accounts {
             Ok(accs) => accs,
             Err(e) => {
@@ -930,6 +945,11 @@ impl LiteSVM {
                 payer_key,
             );
         }
+        log::warn!(
+            "process_transaction validated_fee_payer took {:?}",
+            start.elapsed()
+        );
+        let start = Instant::now();
         let builtins_start_index = accounts.len();
         let maybe_program_indices = tx
             .message()
@@ -975,6 +995,11 @@ impl LiteSVM {
                 Ok(program_index as IndexOfAccount)
             })
             .collect::<Result<Vec<u16>, TransactionError>>();
+        log::warn!(
+            "process_transaction maybe_program_indices took {:?}",
+            start.elapsed()
+        );
+        let start = Instant::now();
 
         match maybe_program_indices {
             Ok(program_indices) => {
@@ -994,6 +1019,11 @@ impl LiteSVM {
                     compute_budget.to_budget(),
                     SVMTransactionExecutionCost::default(),
                 );
+                log::warn!(
+                    "process_transaction invoke_context took {:?}",
+                    start.elapsed()
+                );
+                let start = Instant::now();
                 let mut tx_result = process_message(
                     tx.message(),
                     &program_indices,
@@ -1002,11 +1032,19 @@ impl LiteSVM {
                     &mut accumulated_consume_units,
                 )
                 .map(|_| ());
+                log::warn!(
+                    "process_transaction process_message took {:?}",
+                    start.elapsed()
+                );
+                let start = Instant::now();
 
                 if let Err(err) = self.check_accounts_rent(tx, &context) {
                     tx_result = Err(err);
                 };
-
+                log::warn!(
+                    "process_transaction check_accounts_rent took {:?}",
+                    start.elapsed()
+                );
                 (
                     tx_result,
                     accumulated_consume_units,
@@ -1107,6 +1145,7 @@ impl LiteSVM {
         sanitized_tx: SanitizedTransaction,
         log_collector: Rc<RefCell<LogCollector>>,
     ) -> ExecutionResult {
+        let start = Instant::now();
         let CheckAndProcessTransactionSuccess {
             core:
                 CheckAndProcessTransactionSuccessCore {
@@ -1119,11 +1158,15 @@ impl LiteSVM {
             Ok(value) => value,
             Err(value) => return value,
         };
-        if let Some(ctx) = context {
+        log::warn!("check_and_process_transaction took {:?}", start.elapsed());
+        let start = Instant::now();
+        let result = if let Some(ctx) = context {
             execution_result_if_context(sanitized_tx, ctx, result, compute_units_consumed)
         } else {
             ExecutionResult::result_and_compute_units(result, compute_units_consumed)
-        }
+        };
+        log::warn!("execution_result_if_context took {:?}", start.elapsed());
+        result
     }
 
     fn check_tx_result(
@@ -1146,11 +1189,19 @@ impl LiteSVM {
         sanitized_tx: &SanitizedTransaction,
         log_collector: Rc<RefCell<LogCollector>>,
     ) -> Result<CheckAndProcessTransactionSuccess, ExecutionResult> {
+        let start = Instant::now();
         self.maybe_blockhash_check(sanitized_tx)?;
+        log::warn!("maybe_blockhash_check took {:?}", start.elapsed());
+        let start = Instant::now();
         let compute_budget_limits = get_compute_budget_limits(sanitized_tx, &self.feature_set)?;
+        log::warn!("get_compute_budget_limits took {:?}", start.elapsed());
+        let start = Instant::now();
         self.maybe_history_check(sanitized_tx)?;
+        log::warn!("maybe_history_check took {:?}", start.elapsed());
+        let start = Instant::now();
         let (result, compute_units_consumed, context, fee, payer_key) =
             self.process_transaction(sanitized_tx, compute_budget_limits, log_collector);
+        log::warn!("process_transaction took {:?}", start.elapsed());
         Ok(CheckAndProcessTransactionSuccess {
             core: {
                 CheckAndProcessTransactionSuccessCore {
