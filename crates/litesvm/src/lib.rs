@@ -253,6 +253,7 @@ much easier.
 
 */
 
+use minstant::Instant;
 #[cfg(feature = "precompiles")]
 use precompiles::load_precompiles;
 #[cfg(feature = "nodejs-internal")]
@@ -775,6 +776,7 @@ impl LiteSVM {
         &self,
         tx: VersionedTransaction,
     ) -> Result<SanitizedTransaction, TransactionError> {
+        let start = Instant::now();
         let res = SanitizedTransaction::try_create(
             tx,
             MessageHash::Compute,
@@ -782,20 +784,29 @@ impl LiteSVM {
             &self.accounts,
             &ReservedAccountKeys::empty_key_set(),
         );
-        res.inspect_err(|_| {
+        let result = res.inspect_err(|_| {
             log::error!("Transaction sanitization failed");
-        })
+        });
+        log::warn!(
+            "sanitize_transaction_no_verify_inner took {:?}",
+            start.elapsed()
+        );
+        result
     }
 
     fn sanitize_transaction_no_verify(
         &self,
         tx: VersionedTransaction,
     ) -> Result<SanitizedTransaction, ExecutionResult> {
-        self.sanitize_transaction_no_verify_inner(tx)
+        let start = Instant::now();
+        let result = self
+            .sanitize_transaction_no_verify_inner(tx)
             .map_err(|err| ExecutionResult {
                 tx_result: Err(err),
                 ..Default::default()
-            })
+            });
+        log::warn!("sanitize_transaction_no_verify took {:?}", start.elapsed());
+        result
     }
 
     fn sanitize_transaction(
@@ -1192,7 +1203,13 @@ impl LiteSVM {
         log_collector: Rc<RefCell<LogCollector>>,
     ) -> ExecutionResult {
         map_sanitize_result(self.sanitize_transaction_no_verify(tx), |s_tx| {
-            self.execute_sanitized_transaction_readonly(s_tx, log_collector)
+            let start = Instant::now();
+            let result = self.execute_sanitized_transaction_readonly(s_tx, log_collector);
+            log::warn!(
+                "execute_transaction_no_verify_readonly took {:?}",
+                start.elapsed()
+            );
+            result
         })
     }
 
@@ -1250,6 +1267,7 @@ impl LiteSVM {
         &self,
         tx: impl Into<VersionedTransaction>,
     ) -> Result<SimulatedTransactionInfo, FailedTransactionMetadata> {
+        let start = Instant::now();
         let log_collector = LogCollector {
             bytes_limit: self.log_bytes_limit,
             ..Default::default()
@@ -1268,6 +1286,7 @@ impl LiteSVM {
         } else {
             self.execute_transaction_no_verify_readonly(tx.into(), log_collector.clone())
         };
+        log::warn!("simulate_transaction took {:?}", start.elapsed());
         let Ok(logs) = Rc::try_unwrap(log_collector).map(|lc| lc.into_inner().messages) else {
             unreachable!("Log collector should not be used after simulate_transaction returns")
         };

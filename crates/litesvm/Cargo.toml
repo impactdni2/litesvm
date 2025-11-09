@@ -16,6 +16,7 @@ serde = []
 precompiles = ["dep:agave-precompiles"]
 
 [dependencies]
+minstant.workspace = true
 agave-feature-set.workspace = true
 agave-precompiles = { workspace = true, optional = true }
 agave-reserved-account-keys.workspace = true

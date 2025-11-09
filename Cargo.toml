@@ -89,6 +89,7 @@ spl-token-interface = "2.0"
 spl-token-2022-interface = "2.0"
 test-log = "0.2"
 thiserror = "2.0"
+minstant = "0.1"
 
 [profile.bench]
 debug = true
